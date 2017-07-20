@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+	<!-- 注解扫描包 -->
+	<context:component-scan base-package="com.java" />
+
+	<mvc:annotation-driven />
+
+	<mvc:resources location="/" mapping="/**/*.js" />
+	<mvc:resources location="/" mapping="/**/*.css" />
+	<mvc:resources location="/" mapping="/**/*.png" />
+	<mvc:resources location="/" mapping="/**/*.gif" />
+	<mvc:resources location="/" mapping="/**/*.jpge" />
+	<mvc:resources location="/" mapping="/**/*.jpg" />
+	<mvc:resources location="/" mapping="/**/*.eot" />
+	<mvc:resources location="/" mapping="/**/*.svg" />
+	<mvc:resources location="/" mapping="/**/*.ttf" />
+	<mvc:resources location="/" mapping="/**/*.woff" />
+	<mvc:resources location="/" mapping="/**/*.woff2" />
+	<mvc:resources location="/" mapping="/**/*.otf" />
+
+	<mvc:resources location="/" mapping="/**/*.xls" />
+	<mvc:resources location="/" mapping="/**/*.pdf" />
+
+	<mvc:default-servlet-handler />
+	<!-- spring mvc 视图解析器 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+		id="viewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/pages/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+    
+    <context:annotation-config />  
+    <!-- spring扫描注解的配置  -->
+    <context:component-scan base-package="com.java.task" />  
+      
+    <!-- 开启这个配置，spring才能识别@Scheduled注解    -->
+  
+    <task:scheduler id="qbScheduler" pool-size="10"/>  
+	<task:executor id="executor" pool-size="15"/>
+	<task:annotation-driven scheduler="qbScheduler" executor="executor" mode="proxy"/>  
+	  
+	<!--spring对hibernate的事务管理 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<!-- 自动扫描事务注解 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<!--配置文件路径,controller可以访问到 -->
+	<!-- <util:properties id="configLocation" location="/WEB-INF/config.properties" 
+		/> -->
+
+	<!-- <bean id="exceptionResolver" class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver"> 
+		<property name="defaultErrorView"> <value>error</value> </property> <property 
+		name="exceptionMappings"> <props> <prop key="java.lang.RuntimeException">error</prop> 
+		</props> </property> </bean> -->
+
+	<mvc:interceptors>
+		<!-- 使用bean定义一个Interceptor，直接定义在mvc:interceptors根下面的Interceptor将拦截所有的请求 -->
+		<mvc:interceptor>
+			<mvc:mapping path="/**" />
+			<!-- 定义在mvc:interceptor下面的表示是对特定的请求才进行拦截的 -->
+			<bean class="com.java.interceptor.ValidateInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="maxUploadSize" value="10240000000" />
+		<property name="maxInMemorySize" value="4096" />
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<property name="resolveLazily" value="true"></property>
+	</bean>
+	
+	<!-- <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver"> -->
+	<bean id="exceptionResolver" class="com.java.exception.CustomSimpleMappingExceptionResolver">   
+	    <!-- 定义默认的异常处理页面，当该异常类型的注册时使用 -->  
+	    <property name="defaultErrorView" value="error/defaultError"></property>  
+	    <!-- 定义异常处理页面用来获取异常信息的变量名，默认名为exception -->  
+	    <!-- <property name="exceptionAttribute" value="ex"></property>   -->
+	    <!-- 定义需要特殊处理的异常，用类名或完全路径名作为key，异常也页名作为值 -->
+	    <property name="exceptionMappings">  
+	        <props>  
+	            <prop key="com.java.exception.BusinessException">error/businessError</prop>  
+	            <prop key="com.java.exception.SystemException">error/systemError</prop>
+	            <!-- 这里还可以继续扩展对不同异常类型的处理 -->  
+	        </props>  
+	    </property>  
+	</bean>  
+	
+	<import resource="spring-context.xml" />
+	<!-- <import resource="mongo-config.xml"/> -->
+</beans>
